@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Playground</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .container {
+            display: flex;
+            width: 95%;
+            max-width: 1200px;
+            height: 75vh;
+            gap: 20px;
+            z-index: 10;
+        }
+        
+        #canvas-container {
+            flex: 3;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        canvas {
+            background: rgba(0, 0, 0, 0.1);
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ff8a00;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        
+        .slider-container {
+            margin-bottom: 12px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #ddd;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e52e71;
+            cursor: pointer;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            flex: 1;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            font-size: 0.8rem;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #aaa;
+            z-index: 10;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            #canvas-container {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Particle Playground</h1>
+        <p>Interactive JavaScript Particle System</p>
+    </header>
+    
+    <div class="container">
+        <div id="canvas-container">
+            <canvas id="particleCanvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h2>Particle Properties</h2>
+                <div class="slider-container">
+                    <label for="particleCount">Particle Count: <span id="countValue">150</span></label>
+                    <input type="range" id="particleCount" min="10" max="500" value="150">
+                </div>
+                
+                <div class="slider-container">
+                    <label for="particleSize">Particle Size: <span id="sizeValue">3</span></label>
+                    <input type="range" id="particleSize" min="1" max="20" value="3">
+                </div>
+                
+                <div class="slider-container">
+                    <label for="connectionDistance">Connection Distance: <span id="distanceValue">100</span></label>
+                    <input type="range" id="connectionDistance" min="10" max="300" value="100">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h2>Behavior</h2>
+                <div class="slider-container">
+                    <label for="speed">Movement Speed: <span id="speedValue">2</span></label>
+                    <input type="range" id="speed" min="0" max="10" value="2" step="0.5">
+                </div>
+                
+                <div class="button-group">
+                    <button id="gravityBtn">Gravity: Off</button>
+                    <button id="repelBtn">Repel: Off</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h2>Presets</h2>
+                <div class="presets">
+                    <button class="preset-btn" data-preset="default">Default</button>
+                    <button class="preset-btn" data-preset="sparse">Sparse Network</button>
+                    <button class="preset-btn" data-preset="dense">Dense Cloud</button>
+                    <button class="preset-btn" data-preset="chaos">Chaos</button>
+                    <button class="preset-btn" data-preset="slow">Slow Motion</button>
+                    <button class="preset-btn" data-preset="blackhole">Black Hole</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h2>Actions</h2>
+                <div class="button-group">
+                    <button id="resetBtn">Reset</button>
+                    <button id="pauseBtn">Pause</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Created with JavaScript • Move your mouse to interact with particles</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Canvas setup
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Particle system configuration
+            let config = {
+                particleCount: 150,
+                particleSize: 3,
+                connectionDistance: 100,
+                speed: 2,
+                gravity: false,
+                repel: false,
+                paused: false
+            };
+            
+            // Particles array
+            let particles = [];
+            
+            // Mouse position
+            let mouse = {
+                x: undefined,
+                y: undefined,
+                radius: 100
+            };
+            
+            // Update mouse position
+            canvas.addEventListener('mousemove', function(event) {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = event.clientX - rect.left;
+                mouse.y = event.clientY - rect.top;
+            });
+            
+            canvas.addEventListener('mouseleave', function() {
+                mouse.x = undefined;
+                mouse.y = undefined;
+            });
+            
+            // Particle class
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = config.particleSize;
+                    this.speedX = (Math.random() - 0.5) * config.speed;
+                    this.speedY = (Math.random() - 0.5) * config.speed;
+                    this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+                }                
+                update() {
+                    // Move particle
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    
+                    // Mouse interaction
+                    if (mouse.x !== undefined && mouse.y !== undefined) {
+                        const dx = mouse.x - this.x;
+                        const dy = mouse.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < mouse.radius) {
+                            if (config.repel) {
+                                // Repel particles from mouse
+                                const force = (mouse.radius - distance) / mouse.radius;
+                                this.x -= dx * force * 0.1;
+                                this.y -= dy * force * 0.1;
+                            } else {
+                                // Attract particles to mouse (default behavior)
+                                const force = (mouse.radius - distance) / mouse.radius;
+                                this.x += dx * force * 0.05;
+                                this.y += dy * force * 0.05;
+                            }
+                        }
+                    }
+                    
+                    // Gravity effect
+                    if (config.gravity) {
+                        this.speedY += 0.05;
+                    }
+                    
+                    // Bounce off walls
+                    if (this.x <= 0 || this.x >= canvas.width) {
+                        this.speedX = -this.speedX;
+                    }
+                    
+                    if (this.y <= 0 || this.y >= canvas.height) {
+                        this.speedY = -this.speedY;
+                    }
+                }
+                
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Initialize particles
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < config.particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            }
+            
+            // Draw connections between particles
+            function drawConnections() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < config.connectionDistance) {
+                            const opacity = 1 - distance / config.connectionDistance;
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.3})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            
+            // Animation loop
+            function animate() {
+                if (!config.paused) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Update and draw particles
+                    for (let particle of particles) {
+                        particle.update();
+                        particle.draw();
+                    }
+                    
+                    // Draw connections
+                    drawConnections();
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            // Initialize and start animation
+            initParticles();
+            animate();
+            
+            // Control handlers
+            document.getElementById('particleCount').addEventListener('input', function() {
+                config.particleCount = this.value;
+                document.getElementById('countValue').textContent = this.value;
+                initParticles();
+            });
+            
+            document.getElementById('particleSize').addEventListener('input', function() {
+                config.particleSize = this.value;
+                document.getElementById('sizeValue').textContent = this.value;
+                particles.forEach(particle => {
+                    particle.size = config.particleSize;
+                });
+            });
+            
+            document.getElementById('connectionDistance').addEventListener('input', function() {
+                config.connectionDistance = this.value;
+                document.getElementById('distanceValue').textContent = this.value;
+            });
+            
+            document.getElementById('speed').addEventListener('input', function() {
+                config.speed = parseFloat(this.value);
+                document.getElementById('speedValue').textContent = this.value;
+                
+                particles.forEach(particle => {
+                    // Adjust speed while maintaining direction
+                    const currentSpeed = Math.sqrt(particle.speedX * particle.speedX + particle.speedY * particle.speedY);
+                    const ratio = config.speed / currentSpeed;
+                    particle.speedX *= ratio;
+                    particle.speedY *= ratio;
+                });
+            });
+            
+            document.getElementById('gravityBtn').addEventListener('click', function() {
+                config.gravity = !config.gravity;
+                this.textContent = 'Gravity: ' + (config.gravity ? 'On' : 'Off');
+            });
+            
+            document.getElementById('repelBtn').addEventListener('click', function() {
+                config.repel = !config.repel;
+                this.textContent = 'Repel: ' + (config.repel ? 'On' : 'Off');
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                initParticles();
+            });
+            
+            document.getElementById('pauseBtn').addEventListener('click', function() {
+                config.paused = !config.paused;
+                this.textContent = config.paused ? 'Resume' : 'Pause';
+            });
+            
+            // Preset handlers
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            presetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const preset = this.dataset.preset;
+                    
+                    switch(preset) {
+                        case 'default':
+                            config.particleCount = 150;
+                            config.particleSize = 3;
+                            config.connectionDistance = 100;
+                            config.speed = 2;
+                            config.gravity = false;
+                            config.repel = false;
+                            break;
+                            
+                        case 'sparse':
+                            config.particleCount = 75;
+                            config.connectionDistance = 150;
+                            config.speed = 1;
+                            break;
+                            
+                        case 'dense':
+                            config.particleCount = 300;
+                            config.connectionDistance = 70;
+                            config.speed = 1.5;
+                            break;
+                            
+                        case 'chaos':
+                            config.particleCount = 200;
+                            config.speed = 5;
+                            config.connectionDistance = 50;
+                            break;
+                            
+                        case 'slow':
+                            config.speed = 0.5;
+                            config.connectionDistance = 150;
+                            break;
+                            
+                        case 'blackhole':
+                            config.gravity = true;
+                            config.connectionDistance = 200;
+                            break;
+                    }
+                    
+                    // Update UI to reflect changes
+                    document.getElementById('particleCount').value = config.particleCount;
+                    document.getElementById('countValue').textContent = config.particleCount;
+                    
+                    document.getElementById('particleSize').value = config.particleSize;
+                    document.getElementById('sizeValue').textContent = config.particleSize;
+                    
+                    document.getElementById('connectionDistance').value = config.connectionDistance;
+                    document.getElementById('distanceValue').textContent = config.connectionDistance;
+                    
+                    document.getElementById('speed').value = config.speed;
+                    document.getElementById('speedValue').textContent = config.speed;
+                    
+                    document.getElementById('gravityBtn').textContent = 'Gravity: ' + (config.gravity ? 'On' : 'Off');
+                    document.getElementById('repelBtn').textContent = 'Repel: ' + (config.repel ? 'On' : 'Off');
+                    
+                    // Reinitialize particles
+                    initParticles();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
